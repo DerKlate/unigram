@@ -96,3 +96,14 @@ body {
     text-align: center;
     max-width: 100%;
 }
+/* Colore per la stellina piena (Preferiti) */
+.bookmark-btn.bookmarked {
+    color: #ffcc00; /* Un bel giallo oro */
+    transform: scale(1.1); /* La fa leggermente più grande */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Colore per l'icona dei preferiti nel menu quando è attiva */
+.nav-icon-active {
+    color: #ffcc00;
+}
