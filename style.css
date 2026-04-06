@@ -1,0 +1,98 @@
+/* Resetta i margini di base del browser */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    /* Font altissima leggibilità */
+    font-family: Verdana, system-ui, -apple-system, sans-serif;
+    background-color: #000000; /* Sfondo nero */
+    color: #ffffff; /* Testo bianco */
+    height: 100vh; /* Alto esattamente quanto lo schermo */
+    overflow: hidden; /* Blocca lo scroll normale dell'intera pagina */
+}
+
+/* La barra in alto */
+.top-nav {
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    background-color: #000;
+    border-bottom: 1px solid #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+.top-nav h1 {
+    font-size: 22px;
+}
+
+.menu-icons span {
+    font-size: 24px;
+    margin-left: 15px;
+    cursor: pointer;
+}
+
+/* Il Feed (Scroll Verticale Magnetico) */
+.feed-container {
+    height: 100vh;
+    padding-top: 60px; /* Lascia spazio alla barra in alto */
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory; /* Effetto calamita verticale */
+}
+
+.post {
+    height: calc(100vh - 60px); /* Il post occupa tutto lo schermo visibile */
+    scroll-snap-align: start; /* Si aggancia all'inizio */
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid #222;
+}
+
+.post-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.post-header h2 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.bookmark-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+}
+
+/* Swiper (Il Carosello Orizzontale) */
+.swiper {
+    width: 100%;
+    flex-grow: 1; /* Occupa tutto lo spazio restante sotto il titolo */
+}
+
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    background-color: #1a1a1a; /* Un grigio scuro per far risaltare la slide */
+}
+
+/* Il testo vero e proprio da studiare */
+.slide-content {
+    font-size: 20px; /* Dimensione ideale per lettura rapida su mobile */
+    line-height: 1.5; /* Spazio tra le righe */
+    letter-spacing: 0.5px; /* Spazio tra le lettere (aiuta la dislessia) */
+    text-align: center;
+    max-width: 100%;
+}
