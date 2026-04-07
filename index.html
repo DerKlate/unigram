@@ -2,28 +2,35 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Unigram Studio</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <nav class="top-nav">
-        <h1>Unigram</h1>
-        <div class="menu-icons">
-            <span id="btn-preferiti">🔖</span> 
-            <span id="btn-impostazioni">⚙️</span>
-        </div>
-    </nav>
+    <div class="nav-brand">
+    Unigram <span class="brand-author">by Der_Klate</span>
+</div>
+    <div class="menu-icons">
+        <button id="btn-tutto" class="nav-icon nav-icon-active" aria-label="Home"><i data-lucide="home"></i></button> 
+        <button id="btn-da-leggere" class="nav-icon" aria-label="Da leggere"><i data-lucide="book-open"></i></button>
+        <button id="btn-preferiti" class="nav-icon" aria-label="Preferiti"><i data-lucide="bookmark"></i></button> 
+        <button id="btn-impostazioni" class="nav-icon" aria-label="Impostazioni"><i data-lucide="settings"></i></button>
+    </div>
+</nav>
 
-    <main id="feed-container" class="feed-container">
-        </main>
+    <main id="feed-container" class="feed-container"></main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    
     <script src="app.js"></script>
+    <script>
+        // Inizializza le icone Lucide dopo il caricamento
+        lucide.createIcons();
+    </script>
 </body>
 </html>

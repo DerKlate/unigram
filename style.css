@@ -1,83 +1,160 @@
-/* Resetta i margini di base del browser */
+/* --- 1. VARIABILI E RESET --- */
+:root {
+    /* Tema Scuro */
+    --bg-dark: #0a0a0a;
+    --text-main-dark: #f0f0f0;
+    --card-bg-dark: #161616;
+    --soft-bordo-dark: #3a0a0a;
+
+    /* Tema Chiaro "Morbido" */
+    --bg-light: #fdfaf5;       
+    --text-main-light: #1a1a1a; /* Più scuro per leggibilità */
+    --card-bg-light: #f9f5eb;   
+    --soft-bordo-light: #f8eeee;
+
+    /* Colori Identitari */
+    --accent-bordo: #800020;
+    --text-dim: #707070;
+    --nav-height: 70px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    /* Font altissima leggibilità */
-    font-family: Verdana, system-ui, -apple-system, sans-serif;
-    background-color: #000000; /* Sfondo nero */
-    color: #ffffff; /* Testo bianco */
-    height: 100vh; /* Alto esattamente quanto lo schermo */
-    overflow: hidden; /* Blocca lo scroll normale dell'intera pagina */
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    height: 100dvh;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
 }
 
-/* La barra in alto */
+/* --- 2. GESTIONE TEMI --- */
+
+body.dark-theme {
+    background-color: var(--bg-dark);
+    color: var(--text-main-dark);
+}
+body.dark-theme .top-nav {
+    background-color: rgba(10, 10, 10, 0.9);
+    border-bottom: 1px solid #222;
+}
+body.dark-theme .swiper-slide {
+    background: radial-gradient(circle at center, var(--soft-bordo-dark) 0%, var(--bg-dark) 100%);
+}
+body.dark-theme .action-btn { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+body.light-theme {
+    background-color: var(--bg-light);
+    color: var(--text-main-light);
+}
+body.light-theme .top-nav {
+    background-color: rgba(253, 250, 245, 0.95);
+    border-bottom: 1px solid #e8e0d0;
+}
+body.light-theme .swiper-slide {
+    background: linear-gradient(135deg, var(--card-bg-light) 0%, #fffafa 100%);
+    color: var(--text-main-light);
+}
+body.light-theme .action-btn { background: rgba(0, 0, 0, 0.06); color: var(--text-main-light); }
+body.light-theme .brand-author { color: #888; }
+
+/* --- 3. NAVBAR --- */
 .top-nav {
-    height: 60px;
+    height: var(--nav-height);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
-    background-color: #000;
-    border-bottom: 1px solid #333;
+    padding: 0 16px;
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 100;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
 }
 
-.top-nav h1 {
-    font-size: 22px;
+.nav-brand {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--accent-bordo);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    white-space: nowrap;
 }
 
-.menu-icons span {
-    font-size: 24px;
-    margin-left: 15px;
+.brand-author { font-size: 10px; font-weight: 400; text-transform: none; }
+
+.menu-icons { display: flex; gap: 8px; }
+
+.nav-icon {
+    background: none;
+    border: none;
+    padding: 8px;
     cursor: pointer;
+    color: var(--text-dim);
 }
 
-/* Il Feed (Scroll Verticale Magnetico) */
+.nav-icon-active { color: var(--accent-bordo) !important; }
+
+/* --- 4. FEED (FIX SCROLL) --- */
 .feed-container {
-    height: 100vh;
-    padding-top: 60px; /* Lascia spazio alla barra in alto */
+    height: 100dvh;
     overflow-y: scroll;
-    scroll-snap-type: y mandatory; /* Effetto calamita verticale */
+    scroll-snap-type: y mandatory;
+    /* Rimuoviamo il padding-top per gestire lo scroll internamente */
 }
 
 .post {
-    height: calc(100vh - 60px); /* Il post occupa tutto lo schermo visibile */
-    scroll-snap-align: start; /* Si aggancia all'inizio */
+    height: 100dvh;
+    scroll-snap-align: start;
+    scroll-margin-top: 0px; /* Cruciale per l'allineamento */
     display: flex;
     flex-direction: column;
-    border-bottom: 2px solid #222;
+    padding-top: var(--nav-height); /* Lo spazio della nav è interno al post */
+    position: relative;
 }
 
 .post-header {
-    padding: 15px 20px;
+    height: 60px; /* Altezza fissa per l'header del post */
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .post-header h2 {
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: inherit;
+    opacity: 0.9;
 }
 
-.bookmark-btn {
-    background: none;
+.post-actions { display: flex; gap: 8px; }
+
+.action-btn {
     border: none;
-    color: white;
-    font-size: 24px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Swiper (Il Carosello Orizzontale) */
+.action-btn.active-btn.toread { color: #e63946 !important; }
+.action-btn.active-btn.bookmarked { color: #f59e0b !important; }
+
+/* --- 5. SWIPER & LEGGIBILITÀ --- */
 .swiper {
     width: 100%;
-    flex-grow: 1; /* Occupa tutto lo spazio restante sotto il titolo */
+    flex: 1; /* Occupa tutto lo spazio rimasto nel post */
 }
 
 .swiper-slide {
@@ -85,25 +162,21 @@ body {
     justify-content: center;
     align-items: center;
     padding: 30px;
-    background-color: #1a1a1a; /* Un grigio scuro per far risaltare la slide */
 }
 
-/* Il testo vero e proprio da studiare */
 .slide-content {
-    font-size: 20px; /* Dimensione ideale per lettura rapida su mobile */
-    line-height: 1.5; /* Spazio tra le righe */
-    letter-spacing: 0.5px; /* Spazio tra le lettere (aiuta la dislessia) */
+    font-size: 22px;
+    line-height: 1.5;
+    font-weight: 500; /* Leggermente più spesso per il tema chiaro */
+    max-width: 600px;
     text-align: center;
-    max-width: 100%;
-}
-/* Colore per la stellina piena (Preferiti) */
-.bookmark-btn.bookmarked {
-    color: #ffcc00; /* Un bel giallo oro */
-    transform: scale(1.1); /* La fa leggermente più grande */
-    transition: all 0.2s ease-in-out;
 }
 
-/* Colore per l'icona dei preferiti nel menu quando è attiva */
-.nav-icon-active {
-    color: #ffcc00;
+.swiper-pagination-bullet-active { background: var(--accent-bordo) !important; }
+
+/* --- 6. OTTIMIZZAZIONE --- */
+@media (max-width: 380px) {
+    .nav-brand { font-size: 17px; }
+    .slide-content { font-size: 20px; line-height: 1.4; }
+    .post-header h2 { font-size: 12px; }
 }
