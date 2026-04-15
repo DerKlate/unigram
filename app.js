@@ -1,6 +1,6 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.0
- * Ottimizzato per feedback istantaneo e persistenza dati.
+ * UNIGRAM STUDIO - Core Logic v3.0 (con supporto Immagini)
+ * Ottimizzato per feedback istantaneo, persistenza dati e contenuti multimediali.
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -55,8 +55,22 @@ function renderFeed(data) {
         
         for (let i = 1; i <= 12; i++) {
             const slideText = row[`Slide_${i}`];
+            
             if (slideText && slideText.trim() !== '') {
-                slidesHTML += `<div class="swiper-slide"><div class="slide-content">${slideText}</div></div>`;
+                let slideContentHTML = '';
+                const cleanText = slideText.trim();
+                
+                // CONTROLLO IMMAGINE: Se il testo inizia con [IMG]
+                if (cleanText.startsWith('[IMG]')) {
+                    // Rimuoviamo il tag [IMG] per ottenere solo il link
+                    const imageUrl = cleanText.replace('[IMG]', '').trim();
+                    slideContentHTML = `<img src="${imageUrl}" class="slide-image" alt="Slide ${i} - ${row.Argomento}">`;
+                } else {
+                    // Altrimenti è un normale testo
+                    slideContentHTML = `<div class="slide-content">${cleanText}</div>`;
+                }
+
+                slidesHTML += `<div class="swiper-slide">${slideContentHTML}</div>`;
             }
         }
 
@@ -108,11 +122,9 @@ window.toggleBookmark = function(id, btnElement) {
     }
     localStorage.setItem('unigram_bookmarks', JSON.stringify(bookmarkedIds));
     
-    // Se siamo nel filtro specifico, ricarichiamo il feed dalla memoria
     if (currentFilter === 'bookmarks') {
         renderFeed(lastData);
     } else {
-        // Altrimenti cambiamo solo l'icona senza ricaricare nulla
         updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
     }
 }
@@ -133,9 +145,7 @@ window.toggleToRead = function(id, btnElement) {
     }
 }
 
-// Funzione critica per il cambio icona istantaneo
 function updateButtonIcon(btn, isActive, type) {
-    // 1. Cambiamo la classe del bottone per i colori CSS
     if (isActive) {
         btn.classList.add('active-btn');
         if (type === 'star') btn.classList.add('bookmarked');
@@ -144,7 +154,6 @@ function updateButtonIcon(btn, isActive, type) {
         btn.classList.remove('active-btn', 'bookmarked', 'toread');
     }
 
-    // 2. Cambiamo l'attributo dell'icona i
     const icon = btn.querySelector('i');
     if (icon) {
         if (type === 'star') {
@@ -154,7 +163,6 @@ function updateButtonIcon(btn, isActive, type) {
         }
     }
 
-    // 3. Forziamo Lucide a ridisegnare l'icona in questo specifico bottone
     if (window.lucide) lucide.createIcons();
 }
 
@@ -176,7 +184,7 @@ function setupNav() {
                 currentFilter = item.filter;
                 document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
                 this.classList.add('nav-icon-active');
-                renderFeed(lastData); // Carica dalla memoria
+                renderFeed(lastData); 
             };
         }
     });
@@ -197,7 +205,7 @@ function applyTheme(theme) {
     const settingsIcon = document.querySelector('#btn-impostazioni i');
     if (settingsIcon) {
         settingsIcon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
 }
 
