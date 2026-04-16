@@ -1,6 +1,5 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.0 (con supporto Immagini)
- * Ottimizzato per feedback istantaneo, persistenza dati e contenuti multimediali.
+ * UNIGRAM STUDIO - Core Logic v3.1 (Supporto Immagini & Stato)
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -8,12 +7,12 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SC
 const feedContainer = document.getElementById('feed-container');
 const bodyElement = document.body;
 
-// Variabili di Stato
+// Variabili di Stato (Persistenza ripristinata)
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
 let toReadIds = JSON.parse(localStorage.getItem('unigram_toread')) || [];
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
 let currentFilter = 'all'; 
-let lastData = []; // Memoria locale per evitare ricaricamenti inutili
+let lastData = []; 
 
 /**
  * 1. Caricamento Dati
@@ -24,14 +23,14 @@ function loadData() {
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-            lastData = results.data; // Salviamo i dati in memoria
+            lastData = results.data; 
             renderFeed(lastData);
         }
     });
 }
 
 /**
- * 2. Rendering del Feed
+ * 2. Rendering del Feed con logica Immagini
  */
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
@@ -53,20 +52,21 @@ function renderFeed(data) {
         const idStr = String(row.ID_Carosello);
         let slidesHTML = '';
         
+        // Ciclo dinamico per le slide (1-12)
         for (let i = 1; i <= 12; i++) {
             const slideText = row[`Slide_${i}`];
             
             if (slideText && slideText.trim() !== '') {
-                let slideContentHTML = '';
                 const cleanText = slideText.trim();
                 
-                // CONTROLLO IMMAGINE: Se il testo inizia con [IMG]
-                if (cleanText.startsWith('[IMG]')) {
-                    // Rimuoviamo il tag [IMG] per ottenere solo il link
-                    const imageUrl = cleanText.replace('[IMG]', '').trim();
-                    slideContentHTML = `<img src="${imageUrl}" class="slide-image" alt="Slide ${i} - ${row.Argomento}">`;
+                // LOGICA IMMAGINE: Controllo se è un link o ha il tag [IMG]
+                const isImageUrl = cleanText.startsWith('http') || cleanText.startsWith('[IMG]');
+                
+                let slideContentHTML = '';
+                if (isImageUrl) {
+                    const src = cleanText.replace('[IMG]', '').trim();
+                    slideContentHTML = `<img src="${src}" class="slide-image" loading="lazy" alt="Slide ${i} - ${row.Argomento}">`;
                 } else {
-                    // Altrimenti è un normale testo
                     slideContentHTML = `<div class="slide-content">${cleanText}</div>`;
                 }
 
@@ -100,7 +100,7 @@ function renderFeed(data) {
     });
 
     initSwiper();
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons(); // Rigenera icone dopo il render
 }
 
 function initSwiper() {
@@ -111,7 +111,7 @@ function initSwiper() {
 }
 
 /**
- * 3. Logica Toggle (Aggiornamento Istantaneo)
+ * 3. Logica Toggle (Preferiti & Lettura)
  */
 window.toggleBookmark = function(id, btnElement) {
     id = String(id);
@@ -146,13 +146,9 @@ window.toggleToRead = function(id, btnElement) {
 }
 
 function updateButtonIcon(btn, isActive, type) {
-    if (isActive) {
-        btn.classList.add('active-btn');
-        if (type === 'star') btn.classList.add('bookmarked');
-        if (type === 'book') btn.classList.add('toread');
-    } else {
-        btn.classList.remove('active-btn', 'bookmarked', 'toread');
-    }
+    btn.classList.toggle('active-btn', isActive);
+    if (type === 'star') btn.classList.toggle('bookmarked', isActive);
+    if (type === 'book') btn.classList.toggle('toread', isActive);
 
     const icon = btn.querySelector('i');
     if (icon) {
@@ -162,12 +158,11 @@ function updateButtonIcon(btn, isActive, type) {
             icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
         }
     }
-
     if (window.lucide) lucide.createIcons();
 }
 
 /**
- * 4. Menu e Temi
+ * 4. Navigazione e Temi
  */
 function setupNav() {
     const navMapping = [
@@ -202,11 +197,7 @@ function applyTheme(theme) {
     bodyElement.classList.remove('light-theme', 'dark-theme');
     bodyElement.classList.add(`${theme}-theme`);
     localStorage.setItem('unigram_theme', theme);
-    const settingsIcon = document.querySelector('#btn-impostazioni i');
-    if (settingsIcon) {
-        settingsIcon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
-        if (window.lucide) lucide.createIcons();
-    }
+    if (window.lucide) lucide.createIcons();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

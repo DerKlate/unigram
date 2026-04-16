@@ -161,9 +161,17 @@ body.light-theme .brand-author { color: #888; }
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 30px;
+    padding: 20px; /* Margine di respiro ai lati */
+    box-sizing: border-box;
+    height: 100%; /* Forza la slide a non superare l'altezza del telefono */
 }
-
+.slide-image {
+    width: 100%;
+    height: 100%;
+    max-height: 65vh; /* Evita che si sovrapponga al titolo o alla navbar */
+    object-fit: contain; /* Adatta perfettamente l'immagine allo spazio */
+    border-radius: 12px;
+}
 .slide-content {
     font-size: 22px;
     line-height: 1.5;
@@ -179,12 +187,4 @@ body.light-theme .brand-author { color: #888; }
     .nav-brand { font-size: 17px; }
     .slide-content { font-size: 20px; line-height: 1.4; }
     .post-header h2 { font-size: 12px; }
-}
-/* Stile per le immagini nelle slide */
-.slide-image {
-    max-width: 100%;
-    max-height: 80vh; /* Non supera l'80% dell'altezza dello schermo */
-    object-fit: contain; /* Mantiene le proporzioni senza tagliare l'immagine */
-    border-radius: 10px; /* Bordi leggermente arrotondati, molto stile IG */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Una leggera ombra per staccarla dallo sfondo */
 }
