@@ -1,5 +1,6 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.3 (Visualizzazione Progress Avanzata)
+ * UNIGRAM STUDIO - Core Logic v3.0
+ * Ottimizzato per feedback istantaneo e persistenza dati.
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -7,6 +8,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SC
 const feedContainer = document.getElementById('feed-container');
 const bodyElement = document.body;
 
+// Variabili di Stato
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
 let toReadIds = JSON.parse(localStorage.getItem('unigram_toread')) || [];
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
@@ -26,7 +28,7 @@ function loadData() {
 }
 
 /**
- * 2. Rendering del Feed - Aggiornato con Barra di Progresso e Frazione
+ * 2. Rendering del Feed
  */
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
@@ -48,23 +50,12 @@ function renderFeed(data) {
         const idStr = String(row.ID_Carosello);
         let slidesHTML = '';
         
+        // Ciclo dinamico per le slide (1-12)
         for (let i = 1; i <= 12; i++) {
             const slideText = row[`Slide_${i}`];
+            
             if (slideText && slideText.trim() !== '') {
-                const cleanText = slideText.trim();
-                const isImageUrl = cleanText.startsWith('http') || cleanText.startsWith('[IMG]') || cleanText.startsWith('img/');
-                
-                let slideContentHTML = '';
-                if (isImageUrl) {
-                    const src = cleanText.replace('[IMG]', '').trim();
-                    slideContentHTML = `
-                        <div class="swiper-zoom-container">
-                            <img src="${src}" class="slide-image" loading="lazy">
-                        </div>`;
-                } else {
-                    slideContentHTML = `<div class="slide-content">${cleanText}</div>`;
-                }
-                slidesHTML += `<div class="swiper-slide">${slideContentHTML}</div>`;
+                slidesHTML += `<div class="swiper-slide"><div class="slide-content">${slideText}</div></div>`;
             }
         }
 
@@ -98,7 +89,7 @@ function renderFeed(data) {
     });
 
     initSwiper();
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons(); // Rigenera icone dopo il render
 }
 
 /**
@@ -133,7 +124,7 @@ function initSwiper() {
 }
 
 /**
- * Logica Toggle & Navigazione (Invariata)
+ * 3. Logica Toggle (Aggiornamento Istantaneo)
  */
 window.toggleBookmark = function(id, btnElement) {
     id = String(id);
@@ -143,8 +134,14 @@ window.toggleBookmark = function(id, btnElement) {
         bookmarkedIds.push(id);
     }
     localStorage.setItem('unigram_bookmarks', JSON.stringify(bookmarkedIds));
-    if (currentFilter === 'bookmarks') renderFeed(lastData);
-    else updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
+    
+    // Se siamo nel filtro specifico, ricarichiamo il feed dalla memoria
+    if (currentFilter === 'bookmarks') {
+        renderFeed(lastData);
+    } else {
+        // Altrimenti cambiamo solo l'icona senza ricaricare nulla
+        updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
+    }
 }
 
 window.toggleToRead = function(id, btnElement) {
@@ -160,9 +157,16 @@ window.toggleToRead = function(id, btnElement) {
 }
 
 function updateButtonIcon(btn, isActive, type) {
-    btn.classList.toggle('active-btn', isActive);
-    if (type === 'star') btn.classList.toggle('bookmarked', isActive);
-    if (type === 'book') btn.classList.toggle('toread', isActive);
+    // 1. Cambiamo la classe del bottone per i colori CSS
+    if (isActive) {
+        btn.classList.add('active-btn');
+        if (type === 'star') btn.classList.add('bookmarked');
+        if (type === 'book') btn.classList.add('toread');
+    } else {
+        btn.classList.remove('active-btn', 'bookmarked', 'toread');
+    }
+
+    // 2. Cambiamo l'attributo dell'icona i
     const icon = btn.querySelector('i');
     if (icon) {
         if (type === 'star') icon.setAttribute('fill', isActive ? 'currentColor' : 'none');
@@ -171,6 +175,9 @@ function updateButtonIcon(btn, isActive, type) {
     if (window.lucide) lucide.createIcons();
 }
 
+/**
+ * 4. Menu e Temi
+ */
 function setupNav() {
     const navMapping = [
         { id: 'btn-tutto', filter: 'all' },
