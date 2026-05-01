@@ -1,6 +1,5 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.0
- * Ottimizzato per feedback istantaneo e persistenza dati.
+ * UNIGRAM STUDIO - Core Logic v3.3 (Visualizzazione Progress Avanzata)
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -8,30 +7,26 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SC
 const feedContainer = document.getElementById('feed-container');
 const bodyElement = document.body;
 
-// Variabili di Stato
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
 let toReadIds = JSON.parse(localStorage.getItem('unigram_toread')) || [];
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
 let currentFilter = 'all'; 
-let lastData = []; // Memoria locale per evitare ricaricamenti inutili
+let lastData = []; 
 
-/**
- * 1. Caricamento Dati
- */
 function loadData() {
     Papa.parse(SHEET_CSV_URL, {
         download: true,
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-            lastData = results.data; // Salviamo i dati in memoria
+            lastData = results.data; 
             renderFeed(lastData);
         }
     });
 }
 
 /**
- * 2. Rendering del Feed
+ * 2. Rendering del Feed - Aggiornato con Barra di Progresso e Frazione
  */
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
@@ -56,7 +51,20 @@ function renderFeed(data) {
         for (let i = 1; i <= 12; i++) {
             const slideText = row[`Slide_${i}`];
             if (slideText && slideText.trim() !== '') {
-                slidesHTML += `<div class="swiper-slide"><div class="slide-content">${slideText}</div></div>`;
+                const cleanText = slideText.trim();
+                const isImageUrl = cleanText.startsWith('http') || cleanText.startsWith('[IMG]') || cleanText.startsWith('img/');
+                
+                let slideContentHTML = '';
+                if (isImageUrl) {
+                    const src = cleanText.replace('[IMG]', '').trim();
+                    slideContentHTML = `
+                        <div class="swiper-zoom-container">
+                            <img src="${src}" class="slide-image" loading="lazy">
+                        </div>`;
+                } else {
+                    slideContentHTML = `<div class="slide-content">${cleanText}</div>`;
+                }
+                slidesHTML += `<div class="swiper-slide">${slideContentHTML}</div>`;
             }
         }
 
@@ -76,9 +84,13 @@ function renderFeed(data) {
                         </button>
                     </div>
                 </div>
+                
                 <div class="swiper mySwiper">
                     <div class="swiper-wrapper">${slidesHTML}</div>
+                    
                     <div class="swiper-pagination"></div>
+                    
+                    <div class="swiper-scrollbar"></div>
                 </div>
             </article>`;
         
@@ -89,15 +101,39 @@ function renderFeed(data) {
     if (window.lucide) lucide.createIcons();
 }
 
+/**
+ * 3. Inizializzazione Swiper - Configurazione Barra e Frazione
+ */
 function initSwiper() {
     new Swiper(".mySwiper", {
-        pagination: { el: ".swiper-pagination", dynamicBullets: true },
-        resistanceRatio: 0.7
+        // Paginazione numerica elegante (stile "1 / 8")
+        pagination: { 
+            el: ".swiper-pagination", 
+            type: "fraction",
+            // Personalizzazione del formato per l'estetica
+            renderFraction: function (currentClass, totalClass) {
+                return '<span class="' + currentClass + '"></span>' +
+                       ' <span class="sep">/</span> ' +
+                       '<span class="' + totalClass + '"></span>';
+            }
+        },
+        // Barra di progresso sottile in fondo al carosello
+        scrollbar: {
+            el: ".swiper-scrollbar",
+            hide: false,      // Sempre visibile mentre si scorre
+            draggable: true   // Permette di trascinare la barra
+        },
+        resistanceRatio: 0.7,
+        zoom: {
+            maxRatio: 3,
+            minRatio: 1,
+            toggle: true
+        }
     });
 }
 
 /**
- * 3. Logica Toggle (Aggiornamento Istantaneo)
+ * Logica Toggle & Navigazione (Invariata)
  */
 window.toggleBookmark = function(id, btnElement) {
     id = String(id);
@@ -107,14 +143,8 @@ window.toggleBookmark = function(id, btnElement) {
         bookmarkedIds.push(id);
     }
     localStorage.setItem('unigram_bookmarks', JSON.stringify(bookmarkedIds));
-    
-    // Se siamo nel filtro specifico, ricarichiamo il feed dalla memoria
-    if (currentFilter === 'bookmarks') {
-        renderFeed(lastData);
-    } else {
-        // Altrimenti cambiamo solo l'icona senza ricaricare nulla
-        updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
-    }
+    if (currentFilter === 'bookmarks') renderFeed(lastData);
+    else updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
 }
 
 window.toggleToRead = function(id, btnElement) {
@@ -125,49 +155,28 @@ window.toggleToRead = function(id, btnElement) {
         toReadIds.push(id);
     }
     localStorage.setItem('unigram_toread', JSON.stringify(toReadIds));
-    
-    if (currentFilter === 'toread') {
-        renderFeed(lastData);
-    } else {
-        updateButtonIcon(btnElement, toReadIds.includes(id), 'book');
-    }
+    if (currentFilter === 'toread') renderFeed(lastData);
+    else updateButtonIcon(btnElement, toReadIds.includes(id), 'book');
 }
 
-// Funzione critica per il cambio icona istantaneo
 function updateButtonIcon(btn, isActive, type) {
-    // 1. Cambiamo la classe del bottone per i colori CSS
-    if (isActive) {
-        btn.classList.add('active-btn');
-        if (type === 'star') btn.classList.add('bookmarked');
-        if (type === 'book') btn.classList.add('toread');
-    } else {
-        btn.classList.remove('active-btn', 'bookmarked', 'toread');
-    }
-
-    // 2. Cambiamo l'attributo dell'icona i
+    btn.classList.toggle('active-btn', isActive);
+    if (type === 'star') btn.classList.toggle('bookmarked', isActive);
+    if (type === 'book') btn.classList.toggle('toread', isActive);
     const icon = btn.querySelector('i');
     if (icon) {
-        if (type === 'star') {
-            icon.setAttribute('fill', isActive ? 'currentColor' : 'none');
-        } else {
-            icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
-        }
+        if (type === 'star') icon.setAttribute('fill', isActive ? 'currentColor' : 'none');
+        else icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
     }
-
-    // 3. Forziamo Lucide a ridisegnare l'icona in questo specifico bottone
     if (window.lucide) lucide.createIcons();
 }
 
-/**
- * 4. Menu e Temi
- */
 function setupNav() {
     const navMapping = [
         { id: 'btn-tutto', filter: 'all' },
         { id: 'btn-da-leggere', filter: 'toread' },
         { id: 'btn-preferiti', filter: 'bookmarks' }
     ];
-
     navMapping.forEach(item => {
         const btn = document.getElementById(item.id);
         if (btn) {
@@ -176,11 +185,10 @@ function setupNav() {
                 currentFilter = item.filter;
                 document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
                 this.classList.add('nav-icon-active');
-                renderFeed(lastData); // Carica dalla memoria
+                renderFeed(lastData); 
             };
         }
     });
-
     const btnSettings = document.getElementById('btn-impostazioni');
     if (btnSettings) {
         btnSettings.onclick = function() {
@@ -194,11 +202,7 @@ function applyTheme(theme) {
     bodyElement.classList.remove('light-theme', 'dark-theme');
     bodyElement.classList.add(`${theme}-theme`);
     localStorage.setItem('unigram_theme', theme);
-    const settingsIcon = document.querySelector('#btn-impostazioni i');
-    if (settingsIcon) {
-        settingsIcon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
-        lucide.createIcons();
-    }
+    if (window.lucide) lucide.createIcons();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -180,3 +180,27 @@ body.light-theme .brand-author { color: #888; }
     .slide-content { font-size: 20px; line-height: 1.4; }
     .post-header h2 { font-size: 12px; }
 }
+/* Posiziona il numero della pagina in un angolo elegante */
+.swiper-pagination-fraction {
+    bottom: 15px !important;
+    right: 15px !important;
+    left: auto !important;
+    width: auto !important;
+    background: rgba(0,0,0,0.3); /* Sfondo semitrasparente */
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #fff;
+    font-family: monospace; /* Look tecnico stile Obsidian */
+}
+
+/* Stilizza la barra di progresso */
+.swiper-scrollbar {
+    height: 3px !important;
+    background: rgba(255,255,255,0.1) !important;
+    bottom: 0 !important;
+}
+
+.swiper-scrollbar-drag {
+    background: var(--accent-color, #ffd700) !important; /* Usa il tuo colore preferito */
+}
