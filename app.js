@@ -1,5 +1,5 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.3 (Visualizzazione Progress Avanzata)
+ * UNIGRAM STUDIO - Core Logic v3.4 (Segnalibro Singolo)
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -7,8 +7,12 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SC
 const feedContainer = document.getElementById('feed-container');
 const bodyElement = document.body;
 
+// Variabili di Stato
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
-let toReadIds = JSON.parse(localStorage.getItem('unigram_toread')) || [];
+
+// NUOVA LOGICA: Da array a singola stringa (o null se nessun segnalibro è attivo)
+let savedBookmarkId = localStorage.getItem('unigram_active_bookmark') || null; 
+
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
 let currentFilter = 'all'; 
 let lastData = []; 
@@ -25,9 +29,6 @@ function loadData() {
     });
 }
 
-/**
- * 2. Rendering del Feed - Aggiornato con Barra di Progresso e Frazione
- */
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
 
@@ -35,12 +36,13 @@ function renderFeed(data) {
         if (!row.ID_Carosello || !row.Argomento) return false;
         const idStr = String(row.ID_Carosello);
         if (currentFilter === 'bookmarks') return bookmarkedIds.includes(idStr);
-        if (currentFilter === 'toread') return toReadIds.includes(idStr);
+        // Il filtro della navbar ora mostrerà SOLO l'unico carosello salvato
+        if (currentFilter === 'toread') return idStr === savedBookmarkId; 
         return true;
     });
 
     if (filteredData.length === 0) {
-        feedContainer.innerHTML = `<div style="padding:100px 20px; text-align:center; opacity:0.5;">Nessun contenuto trovato.</div>`;
+        feedContainer.innerHTML = `<div style="padding:100px 20px; text-align:center; opacity:0.5;">Nessun segnalibro salvato.</div>`;
         return;
     }
 
@@ -69,7 +71,8 @@ function renderFeed(data) {
         }
 
         const isBookmarked = bookmarkedIds.includes(idStr);
-        const isToRead = toReadIds.includes(idStr);
+        // Verifica se questo specifico carosello è il nostro segnalibro salvato
+        const isToRead = (idStr === savedBookmarkId);
 
         const postHTML = `
             <article class="post" id="post-${idStr}">
@@ -87,9 +90,7 @@ function renderFeed(data) {
                 
                 <div class="swiper mySwiper">
                     <div class="swiper-wrapper">${slidesHTML}</div>
-                    
                     <div class="swiper-pagination"></div>
-                    
                     <div class="swiper-scrollbar"></div>
                 </div>
             </article>`;
@@ -101,40 +102,27 @@ function renderFeed(data) {
     if (window.lucide) lucide.createIcons();
 }
 
-/**
- * 3. Inizializzazione Swiper - Configurazione Barra e Frazione
- */
 function initSwiper() {
     new Swiper(".mySwiper", {
-        // Paginazione numerica elegante (stile "1 / 8")
         pagination: { 
             el: ".swiper-pagination", 
             type: "fraction",
-            // Personalizzazione del formato per l'estetica
             renderFraction: function (currentClass, totalClass) {
                 return '<span class="' + currentClass + '"></span>' +
                        ' <span class="sep">/</span> ' +
                        '<span class="' + totalClass + '"></span>';
             }
         },
-        // Barra di progresso sottile in fondo al carosello
         scrollbar: {
             el: ".swiper-scrollbar",
-            hide: false,      // Sempre visibile mentre si scorre
-            draggable: true   // Permette di trascinare la barra
+            hide: false,
+            draggable: true
         },
         resistanceRatio: 0.7,
-        zoom: {
-            maxRatio: 3,
-            minRatio: 1,
-            toggle: true
-        }
+        zoom: { maxRatio: 3, minRatio: 1, toggle: true }
     });
 }
 
-/**
- * Logica Toggle & Navigazione (Invariata)
- */
 window.toggleBookmark = function(id, btnElement) {
     id = String(id);
     if (bookmarkedIds.includes(id)) {
@@ -147,16 +135,40 @@ window.toggleBookmark = function(id, btnElement) {
     else updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
 }
 
+/**
+ * LOGICA SEGNALIBRO SINGOLO (SOVRASCRITTURA)
+ */
 window.toggleToRead = function(id, btnElement) {
     id = String(id);
-    if (toReadIds.includes(id)) {
-        toReadIds = toReadIds.filter(tId => tId !== id);
+    const isRemoving = (savedBookmarkId === id);
+    
+    if (isRemoving) {
+        savedBookmarkId = null;
     } else {
-        toReadIds.push(id);
+        savedBookmarkId = id;
     }
-    localStorage.setItem('unigram_toread', JSON.stringify(toReadIds));
-    if (currentFilter === 'toread') renderFeed(lastData);
-    else updateButtonIcon(btnElement, toReadIds.includes(id), 'book');
+    
+    localStorage.setItem('unigram_active_bookmark', savedBookmarkId || '');
+
+    // AGGIORNAMENTO VISIVO DI TUTTE LE ICONE "LIBRO" NEL FEED
+    document.querySelectorAll('.post').forEach(post => {
+        const postId = post.id.replace('post-', '');
+        const btn = post.querySelector('button[onclick^="toggleToRead"]');
+        if (btn) {
+            const isActive = (postId === savedBookmarkId);
+            // Forza la rimozione o aggiunta delle classi e dell'attributo lucide
+            btn.classList.toggle('active-btn', isActive);
+            btn.classList.toggle('toread', isActive);
+            
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
+            }
+        }
+    });
+
+    // Rigenera le icone per riflettere il cambio di data-lucide
+    if (window.lucide) lucide.createIcons();
 }
 
 function updateButtonIcon(btn, isActive, type) {
@@ -172,23 +184,74 @@ function updateButtonIcon(btn, isActive, type) {
 }
 
 function setupNav() {
-    const navMapping = [
-        { id: 'btn-tutto', filter: 'all' },
-        { id: 'btn-da-leggere', filter: 'toread' },
-        { id: 'btn-preferiti', filter: 'bookmarks' }
-    ];
-    navMapping.forEach(item => {
-        const btn = document.getElementById(item.id);
-        if (btn) {
-            btn.onclick = function(e) {
-                e.preventDefault();
-                currentFilter = item.filter;
-                document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
-                this.classList.add('nav-icon-active');
-                renderFeed(lastData); 
-            };
+    const btnTutto = document.getElementById('btn-tutto');
+    const btnSegnalibro = document.getElementById('btn-da-leggere'); 
+    const btnPreferiti = document.getElementById('btn-preferiti');
+
+    // Funzione helper per lo scroll verso il segnalibro
+    const scrollToBookmark = () => {
+        if (savedBookmarkId) {
+            const target = document.getElementById(`post-${savedBookmarkId}`);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
         }
-    });
+    };
+
+    // 1. TASTO HOME (Tutto)
+    if (btnTutto) {
+        btnTutto.onclick = function(e) {
+            e.preventDefault();
+            
+            // Se non siamo già nella vista "Tutto", ricarica il feed
+            if (currentFilter !== 'all') {
+                currentFilter = 'all';
+                renderFeed(lastData);
+            }
+            
+            // Aggiorna l'icona attiva
+            document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
+            this.classList.add('nav-icon-active');
+
+            // Riporta l'utente al primo carosello in cima in modo fluido
+            feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    }
+
+    // 2. TASTO SEGNALIBRO (Da leggere)
+    if (btnSegnalibro) {
+        btnSegnalibro.onclick = function(e) {
+            e.preventDefault();
+            
+            if (currentFilter !== 'all') {
+                currentFilter = 'all';
+                document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
+                btnTutto.classList.add('nav-icon-active'); 
+                renderFeed(lastData);
+            }
+            // Dopo aver caricato la home, scorre fino al segnalibro salvato
+            setTimeout(scrollToBookmark, 100);
+        };
+    }
+
+    // 3. TASTO PREFERITI
+    if (btnPreferiti) {
+        btnPreferiti.onclick = function(e) {
+            e.preventDefault();
+            
+            currentFilter = 'bookmarks';
+            
+            document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
+            this.classList.add('nav-icon-active');
+            
+            renderFeed(lastData);
+            
+            // Quando si entra nei preferiti, è bene partire dalla cima
+            feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    }
+
+    // TASTO IMPOSTAZIONI (Tema)
     const btnSettings = document.getElementById('btn-impostazioni');
     if (btnSettings) {
         btnSettings.onclick = function() {

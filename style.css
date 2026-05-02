@@ -105,6 +105,7 @@ body.light-theme .brand-author { color: #888; }
     height: 100dvh;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
     /* Rimuoviamo il padding-top per gestire lo scroll internamente */
 }
 

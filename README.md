@@ -1,50 +1,47 @@
 # 📱 Unigram Studio
 
 ## 📖 La Visione: Perché nasce Unigram?
-Unigram è una web app mobile-first nata da un'esigenza reale e personale: ottimizzare il tempo di studio di uno studente universitario pendolare, genitore di due figli e neurodivergente (ADHD). 
-Studiare su iPad o testi complessi durante brevi tragitti in treno (10-15 minuti) risulta spesso dispersivo. Il cervello con ADHD, tuttavia, apprende in modo estremamente efficiente "al volo", se stimolato correttamente.
+Unigram è una web app mobile-first nata da un'esigenza reale: ottimizzare lo studio universitario per profili neurodivergenti (ADHD), genitori e studenti pendolari. 
+L'obiettivo è trasformare i tempi morti (10-15 minuti in treno) in sessioni di apprendimento ad alta efficienza, eliminando le distrazioni dei testi complessi.
 
-**L'idea:** Sfruttare la memoria muscolare e i meccanismi di gratificazione tipici dei social media (nello specifico, Instagram) per creare un feed di micro-learning. Invece di scrollare post a caso, si scrollano "caroselli" di preparazione a un esame a risposta multipla (stile "scuola guida"). Niente distrazioni, altissima leggibilità, zero attrito.
+**L'idea:** Sfruttare la memoria muscolare e i meccanismi di gratificazione dei social (stile Instagram) per creare un feed di micro-learning. Si scorrono "caroselli" didattici anziché post, con altissima leggibilità e zero attrito.
 
 ## 🎯 Specifiche del Progetto
-* **Tipo di App:** Web App in HTML/CSS/JS "Vanilla" (nessun framework complesso), progettata unicamente per la visualizzazione mobile.
-* **UX/UI:** Feed a scorrimento verticale "magnetico" per passare da un argomento all'altro. Scorrimento orizzontale all'interno del singolo argomento per sfogliare le slide.
-* **Contenuto:** 30-60 caroselli in ordine fisso. Massimo 10-12 slide per carosello. Testo limitato a circa 180 caratteri per slide per non sovraccaricare l'attenzione.
-* **Accessibilità:** Font sans-serif ad alta leggibilità, dimensione adatta alla lettura su smartphone in movimento (18-22px), contrasto elevato o ammorbidito (tramite temi) per supportare lievi forme di dislessia e ridurre l'affaticamento.
-* **Vincoli Tecnici:** Utilizzo esclusivo di strumenti gratuiti (Google Workspace, GitHub). L'autore ha competenze di programmazione base, quindi il codice deve rimanere pulito, commentato e modulare.
+* **Tipo di App:** Web App "Vanilla" (HTML/CSS/JS), ottimizzata esclusivamente per dispositivi mobile.
+* **UX/UI:** Feed verticale magnetico (Snap Scroll) tra i caroselli e scorrimento orizzontale per le slide interne.
+* **Micro-Learning:** 30-60 caroselli in ordine fisso. Massimo 10-12 slide per argomento, con testo limitato a circa 180 caratteri per preservare l'attenzione.
+* **Accessibilità:** Font sans-serif (18-22px), contrasto ottimizzato e temi specifici per ridurre l'affaticamento visivo e supportare la dislessia.
 
 ## 🛠️ Stack Tecnologico
-* **Frontend:** HTML5, CSS3, JavaScript.
+* **Frontend:** HTML5, CSS3, JavaScript Vanilla.
 * **Librerie Esterne:**
-    * [Swiper.js](https://swiperjs.com/): Per la gestione nativa dei caroselli orizzontali (touch/swipe).
-    * [PapaParse](https://www.papaparse.com/): Per la lettura del database in tempo reale.
-    * [Lucide Icons](https://lucide.dev/): Libreria di icone vettoriali moderne e senza bordature pesanti, perfette per interfacce pulite.
-* **Database (Backend-less):** Google Sheets, pubblicato sul web in formato `.csv`.
-* **Hosting e CI/CD:** GitHub Pages con aggiornamento diretto da Visual Studio Code tramite Git locale.
-* **Memoria Dati:** `localStorage` del browser per salvare le preferenze dell'utente senza necessità di login o server.
+    * [Swiper.js](https://swiperjs.com/): Gestione dei caroselli con moduli **Zoom** (pinch-to-zoom) e **Scrollbar**.
+    * [PapaParse](https://www.papaparse.com/): Parsing del database CSV in tempo reale.
+    * [Lucide Icons](https://lucide.dev/): Icone vettoriali minimaliste.
+* **Database:** Google Sheets (pubblicato come .csv).
+* **Hosting:** GitHub Pages con distribuzione tramite Git locale.
+* **Immagini:** Hosting diretto su GitHub (cartella `/img`) per massime prestazioni e supporto offline.
 
 ## 💾 Struttura del Database (Google Sheets)
-Il sistema è progettato per interfacciarsi con i riassunti generati dall'Intelligenza Artificiale (Google NotebookLM) partendo dai PDF universitari. La struttura fissa delle colonne è:
+Il sistema accetta riassunti generati da IA (es. NotebookLM) strutturati in colonne fisse:
 `ID_Carosello` | `Argomento` | `Slide_1` ... `Slide_12` | `Tipo_Media`
 
-## ✅ Stato Attuale del Progetto
+## ✅ Stato del Progetto
 
-### Fase 1: Setup Architettura (Completata)
-* [x] Setup architettura HTML/CSS/JS.
-* [x] Scroll magnetico verticale e swipe orizzontale.
-* [x] Integrazione dinamica con database Google Sheets (CSV).
-* [x] Pubblicazione online tramite GitHub Pages.
-* [x] Creazione della funzione base "Preferiti" (salvataggio su dispositivo).
+### Fase 1: Architettura Core (Completata)
+* [x] Setup HTML/CSS/JS con Scroll Snap verticale.
+* [x] Integrazione dinamica con Google Sheets via CSV.
+* [x] Funzione "Preferiti" con persistenza in `localStorage`.
 
-### Fase 2: Implementazione "Elenco di Lettura" e Refactoring UX (Completata)
-* [x] **Nuova Navbar Modernizzata:** Introdotti tre filtri di navigazione visivi con icone Lucide (Tutto 🏠, Da leggere 📖, Preferiti 🔖) e ottimizzato il branding dell'autore per non andare a capo su schermi stretti.
-* [x] **Gestione Stato e Prestazioni:** Aggiunta la variabile `currentFilter` e un sistema di caching locale in JavaScript (`lastData`) per aggiornare le icone e i filtri istantaneamente al click, eliminando ritardi e ricaricamenti inutili.
-* [x] **Nuovo Segnalibro indipendente:** Creata la logica per salvare e conservare gli ID dei caroselli nell'array `unigram_toread` all'interno del `localStorage`, con logica separata dai Preferiti.
-* [x] **Dual Theme ADHD-Friendly:** Aggiunta di un "Soft Light Mode", utilizzando colori crema e sabbia anziché bianchi accecanti, e un "Dark Mode", commutabili tramite le impostazioni.
-* [x] **Fix Dinamico Mobile:** Passaggio all'unità di misura `100dvh` e utilizzo di `scroll-margin-top` per garantire che i titoli dei caroselli non vengano mai nascosti o tagliati quando le barre di navigazione del browser compaiono o scompaiono.
+### Fase 2: UX Refactoring & Visualizzazione Avanzata (Completata)
+* [x] **Visualizzazione Progressiva:** Sostituiti i puntini di navigazione con un contatore a frazione (es. "3 / 10") e una barra di progresso lineare in fondo a ogni post per un feedback immediato sul carico di studio.
+* [x] **Supporto Immagini & Zoom:** Implementato il tag `[IMG]` per caricare immagini da GitHub. Aggiunta la funzione **Pinch-to-Zoom** (allargare le dita) e doppio tocco per l'analisi dei dettagli grafici.
+* [x] **Segnalibro Intelligente (Single Bookmark):** Trasformazione dell'elenco di lettura in un segnalibro unico. Il sistema ora ricorda l'esatto punto di interruzione e sovrascrive automaticamente il vecchio segnalibro al nuovo click.
+* [x] **Navigazione Smart:** * Il tasto **Segnalibro** in alto effettua uno scroll fluido verso la posizione salvata nel feed principale senza filtrare i contenuti.
+    * Il tasto **Home** riporta istantaneamente l'utente all'inizio della prima slide del feed.
+* [x] **Dual Theme ADHD-Friendly:** Switch rapido tra "Dark Mode" profondo e "Soft Light Mode" (crema/sabbia) per ridurre l'abbagliamento.
 
 ## 🚀 Prossimi Sviluppi (Fase 3: Roadmap)
-* **Integrazione "Reels" Didattici:** Predisposizione del database e dell'interfaccia UI per accettare contenuti multimediali (immagini o brevi video esplicativi) all'interno delle slide.
-* **Ottimizzazione Prompt:** Stesura del prompt definitivo per NotebookLM, così da automatizzare in modo impeccabile la trasformazione dei PDF in formato compatibile con le colonne del nostro CSV.
-* **Gamification e Progressi:** Studio di un sistema visivo leggero (es. barra di completamento) per indicare quanti caroselli mancano alla fine del programma.
-* **Supporto PWA (Progressive Web App):** Trasformare Unigram per permetterne l'installazione nella home dello smartphone e l'utilizzo base offline nei momenti di assenza di rete (es. gallerie in treno).
+* **Ottimizzazione Prompt:** Affinamento dei prompt per NotebookLM per automatizzare la creazione dei CSV dai PDF universitari.
+* **Gamification Leggera:** Indicatori visivi del completamento totale del programma d'esame.
+* **PWA (Progressive Web App):** Installazione su home screen e gestione cache per lo studio offline totale.
