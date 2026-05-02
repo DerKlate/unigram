@@ -1,5 +1,5 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.4 (Segnalibro Singolo)
+ * UNIGRAM STUDIO - Core Logic v3.5 (Fix Segnalibro Mobile e iOS Safari)
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -7,14 +7,10 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SC
 const feedContainer = document.getElementById('feed-container');
 const bodyElement = document.body;
 
-// Variabili di Stato
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
-
-// NUOVA LOGICA: Da array a singola stringa (o null se nessun segnalibro è attivo)
 let savedBookmarkId = localStorage.getItem('unigram_active_bookmark') || null; 
-
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
-let currentFilter = 'all'; 
+let currentFilter = 'all'; // I filtri ora sono solo 'all' e 'bookmarks'
 let lastData = []; 
 
 function loadData() {
@@ -32,17 +28,17 @@ function loadData() {
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
 
+    // IL FILTRO "DA LEGGERE" È STATO RIMOSSO. 
+    // Il segnalibro ora non nasconde gli altri post, fa solo scorrere la pagina.
     const filteredData = data.filter(row => {
         if (!row.ID_Carosello || !row.Argomento) return false;
         const idStr = String(row.ID_Carosello);
         if (currentFilter === 'bookmarks') return bookmarkedIds.includes(idStr);
-        // Il filtro della navbar ora mostrerà SOLO l'unico carosello salvato
-        if (currentFilter === 'toread') return idStr === savedBookmarkId; 
-        return true;
+        return true; 
     });
 
     if (filteredData.length === 0) {
-        feedContainer.innerHTML = `<div style="padding:100px 20px; text-align:center; opacity:0.5;">Nessun segnalibro salvato.</div>`;
+        feedContainer.innerHTML = `<div style="padding:100px 20px; text-align:center; opacity:0.5;">Nessun contenuto trovato.</div>`;
         return;
     }
 
@@ -71,7 +67,6 @@ function renderFeed(data) {
         }
 
         const isBookmarked = bookmarkedIds.includes(idStr);
-        // Verifica se questo specifico carosello è il nostro segnalibro salvato
         const isToRead = (idStr === savedBookmarkId);
 
         const postHTML = `
@@ -108,16 +103,10 @@ function initSwiper() {
             el: ".swiper-pagination", 
             type: "fraction",
             renderFraction: function (currentClass, totalClass) {
-                return '<span class="' + currentClass + '"></span>' +
-                       ' <span class="sep">/</span> ' +
-                       '<span class="' + totalClass + '"></span>';
+                return '<span class="' + currentClass + '"></span> <span class="sep">/</span> <span class="' + totalClass + '"></span>';
             }
         },
-        scrollbar: {
-            el: ".swiper-scrollbar",
-            hide: false,
-            draggable: true
-        },
+        scrollbar: { el: ".swiper-scrollbar", hide: false, draggable: true },
         resistanceRatio: 0.7,
         zoom: { maxRatio: 3, minRatio: 1, toggle: true }
     });
@@ -135,9 +124,7 @@ window.toggleBookmark = function(id, btnElement) {
     else updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
 }
 
-/**
- * LOGICA SEGNALIBRO SINGOLO (SOVRASCRITTURA)
- */
+// TOGGLE SEGNALIBRO: Ora non ricarica MAI la pagina, aggiorna solo l'estetica.
 window.toggleToRead = function(id, btnElement) {
     id = String(id);
     const isRemoving = (savedBookmarkId === id);
@@ -150,24 +137,18 @@ window.toggleToRead = function(id, btnElement) {
     
     localStorage.setItem('unigram_active_bookmark', savedBookmarkId || '');
 
-    // AGGIORNAMENTO VISIVO DI TUTTE LE ICONE "LIBRO" NEL FEED
+    // Aggiorna istantaneamente i colori delle icone su tutti i post senza bloccare la pagina
     document.querySelectorAll('.post').forEach(post => {
         const postId = post.id.replace('post-', '');
         const btn = post.querySelector('button[onclick^="toggleToRead"]');
         if (btn) {
             const isActive = (postId === savedBookmarkId);
-            // Forza la rimozione o aggiunta delle classi e dell'attributo lucide
             btn.classList.toggle('active-btn', isActive);
             btn.classList.toggle('toread', isActive);
-            
             const icon = btn.querySelector('i');
-            if (icon) {
-                icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
-            }
+            if (icon) icon.setAttribute('data-lucide', isActive ? 'book-open-check' : 'book-open');
         }
     });
-
-    // Rigenera le icone per riflettere il cambio di data-lucide
     if (window.lucide) lucide.createIcons();
 }
 
@@ -188,77 +169,74 @@ function setupNav() {
     const btnSegnalibro = document.getElementById('btn-da-leggere'); 
     const btnPreferiti = document.getElementById('btn-preferiti');
 
-    // Funzione helper per lo scroll: Ottimizzata per Mobile!
+    // SCROLL FIX PER SAFARI E IPHONE
     const scrollToBookmark = () => {
         if (savedBookmarkId) {
             const target = document.getElementById(`post-${savedBookmarkId}`);
             if (target) {
-                // Invece di scrollIntoView (buggato su iOS), diciamo al contenitore 
-                // di scorrere esattamente all'altezza (offsetTop) di quel post.
-                feedContainer.scrollTo({ 
-                    top: target.offsetTop, 
-                    behavior: 'smooth' 
-                });
+                // 1. Spegniamo la calamita (scroll-snap) altrimenti Safari blocca lo scorrimento
+                feedContainer.style.scrollSnapType = 'none';
+                
+                // 2. Eseguiamo lo scroll fisico
+                feedContainer.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
+                
+                // 3. Riaccendiamo la calamita dopo 800 millisecondi (il tempo che finisca l'animazione)
+                setTimeout(() => {
+                    feedContainer.style.scrollSnapType = 'y mandatory';
+                }, 800);
             }
+        } else {
+            // Se clicco l'icona in alto ma non ho salvato niente, diamo un piccolo avviso
+            alert("Nessun segnalibro salvato! Clicca l'icona del libro su un carosello per salvarlo.");
         }
     };
 
-    // 1. TASTO HOME (Tutto)
     if (btnTutto) {
         btnTutto.onclick = function(e) {
             e.preventDefault();
-            
             if (currentFilter !== 'all') {
                 currentFilter = 'all';
                 renderFeed(lastData);
             }
-            
             document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
             this.classList.add('nav-icon-active');
-
+            
+            feedContainer.style.scrollSnapType = 'none';
             feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => { feedContainer.style.scrollSnapType = 'y mandatory'; }, 800);
         };
     }
 
-    // 2. TASTO SEGNALIBRO (Da leggere)
+    // TASTO SEGNALIBRO (NAVBAR)
     if (btnSegnalibro) {
         btnSegnalibro.onclick = function(e) {
             e.preventDefault();
             
+            // Se ero nei preferiti, ricarico tutti i contenuti prima di saltare
             if (currentFilter !== 'all') {
-                // Se siamo nei Preferiti, rimettiamo tutto il feed
                 currentFilter = 'all';
                 document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
-                btnTutto.classList.add('nav-icon-active'); 
+                btnTutto.classList.add('nav-icon-active'); // Accendiamo visivamente la Home
                 renderFeed(lastData);
-                
-                // IMPORTANTE PER MOBILE: Aumentiamo il timeout a 300ms. 
-                // Dà il tempo al processore dello smartphone di "disegnare" i caroselli prima di scorrere.
                 setTimeout(scrollToBookmark, 300);
             } else {
-                // Se eravamo GIÀ nella home, non serve ricaricare nulla: scorri e basta.
+                // Se sono già nella home, salto direttamente al segnalibro
                 scrollToBookmark();
             }
         };
     }
 
-    // 3. TASTO PREFERITI
     if (btnPreferiti) {
         btnPreferiti.onclick = function(e) {
             e.preventDefault();
-            
             currentFilter = 'bookmarks';
-            
             document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
             this.classList.add('nav-icon-active');
-            
             renderFeed(lastData);
-            
-            feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            feedContainer.scrollTo({ top: 0, behavior: 'auto' });
         };
     }
 
-    // TASTO IMPOSTAZIONI (Tema)
     const btnSettings = document.getElementById('btn-impostazioni');
     if (btnSettings) {
         btnSettings.onclick = function() {
