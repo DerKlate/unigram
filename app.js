@@ -188,12 +188,17 @@ function setupNav() {
     const btnSegnalibro = document.getElementById('btn-da-leggere'); 
     const btnPreferiti = document.getElementById('btn-preferiti');
 
-    // Funzione helper per lo scroll verso il segnalibro
+    // Funzione helper per lo scroll: Ottimizzata per Mobile!
     const scrollToBookmark = () => {
         if (savedBookmarkId) {
             const target = document.getElementById(`post-${savedBookmarkId}`);
             if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
+                // Invece di scrollIntoView (buggato su iOS), diciamo al contenitore 
+                // di scorrere esattamente all'altezza (offsetTop) di quel post.
+                feedContainer.scrollTo({ 
+                    top: target.offsetTop, 
+                    behavior: 'smooth' 
+                });
             }
         }
     };
@@ -203,17 +208,14 @@ function setupNav() {
         btnTutto.onclick = function(e) {
             e.preventDefault();
             
-            // Se non siamo già nella vista "Tutto", ricarica il feed
             if (currentFilter !== 'all') {
                 currentFilter = 'all';
                 renderFeed(lastData);
             }
             
-            // Aggiorna l'icona attiva
             document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
             this.classList.add('nav-icon-active');
 
-            // Riporta l'utente al primo carosello in cima in modo fluido
             feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
@@ -224,13 +226,19 @@ function setupNav() {
             e.preventDefault();
             
             if (currentFilter !== 'all') {
+                // Se siamo nei Preferiti, rimettiamo tutto il feed
                 currentFilter = 'all';
                 document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
                 btnTutto.classList.add('nav-icon-active'); 
                 renderFeed(lastData);
+                
+                // IMPORTANTE PER MOBILE: Aumentiamo il timeout a 300ms. 
+                // Dà il tempo al processore dello smartphone di "disegnare" i caroselli prima di scorrere.
+                setTimeout(scrollToBookmark, 300);
+            } else {
+                // Se eravamo GIÀ nella home, non serve ricaricare nulla: scorri e basta.
+                scrollToBookmark();
             }
-            // Dopo aver caricato la home, scorre fino al segnalibro salvato
-            setTimeout(scrollToBookmark, 100);
         };
     }
 
@@ -246,7 +254,6 @@ function setupNav() {
             
             renderFeed(lastData);
             
-            // Quando si entra nei preferiti, è bene partire dalla cima
             feedContainer.scrollTo({ top: 0, behavior: 'smooth' });
         };
     }
