@@ -1,5 +1,5 @@
 /**
- * UNIGRAM STUDIO - Core Logic v3.5 (Fix Segnalibro Mobile e iOS Safari)
+ * UNIGRAM STUDIO - Core Logic v4.0 (Fix Definitivo Scroll Mobile)
  */
 
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0qEN2SCCtrsWMxCQDxBQwTfBLc4O-VKnjkiE46PJHk3kg7ZXuy56Oyo-ZYASeLIUjr5QMWGdpin1g/pub?output=csv";
@@ -10,7 +10,7 @@ const bodyElement = document.body;
 let bookmarkedIds = JSON.parse(localStorage.getItem('unigram_bookmarks')) || [];
 let savedBookmarkId = localStorage.getItem('unigram_active_bookmark') || null; 
 let currentTheme = localStorage.getItem('unigram_theme') || 'dark'; 
-let currentFilter = 'all'; // I filtri ora sono solo 'all' e 'bookmarks'
+let currentFilter = 'all'; // I filtri ora sono SOLO 'all' e 'bookmarks'
 let lastData = []; 
 
 function loadData() {
@@ -28,12 +28,11 @@ function loadData() {
 function renderFeed(data) {
     feedContainer.innerHTML = ''; 
 
-    // IL FILTRO "DA LEGGERE" È STATO RIMOSSO. 
-    // Il segnalibro ora non nasconde gli altri post, fa solo scorrere la pagina.
     const filteredData = data.filter(row => {
         if (!row.ID_Carosello || !row.Argomento) return false;
         const idStr = String(row.ID_Carosello);
         if (currentFilter === 'bookmarks') return bookmarkedIds.includes(idStr);
+        // Nessun filtro "toread" qui. Se siamo in "all", mostra tutto.
         return true; 
     });
 
@@ -124,7 +123,6 @@ window.toggleBookmark = function(id, btnElement) {
     else updateButtonIcon(btnElement, bookmarkedIds.includes(id), 'star');
 }
 
-// TOGGLE SEGNALIBRO: Ora non ricarica MAI la pagina, aggiorna solo l'estetica.
 window.toggleToRead = function(id, btnElement) {
     id = String(id);
     const isRemoving = (savedBookmarkId === id);
@@ -137,7 +135,7 @@ window.toggleToRead = function(id, btnElement) {
     
     localStorage.setItem('unigram_active_bookmark', savedBookmarkId || '');
 
-    // Aggiorna istantaneamente i colori delle icone su tutti i post senza bloccare la pagina
+    // Aggiorna solo visivamente i pulsanti, senza ricaricare la pagina
     document.querySelectorAll('.post').forEach(post => {
         const postId = post.id.replace('post-', '');
         const btn = post.querySelector('button[onclick^="toggleToRead"]');
@@ -169,24 +167,20 @@ function setupNav() {
     const btnSegnalibro = document.getElementById('btn-da-leggere'); 
     const btnPreferiti = document.getElementById('btn-preferiti');
 
-    // SCROLL FIX PER SAFARI E IPHONE
     const scrollToBookmark = () => {
         if (savedBookmarkId) {
             const target = document.getElementById(`post-${savedBookmarkId}`);
             if (target) {
-                // 1. Spegniamo la calamita (scroll-snap) altrimenti Safari blocca lo scorrimento
+                // Sblocca lo snap di Safari per permettere lo scorrimento
                 feedContainer.style.scrollSnapType = 'none';
-                
-                // 2. Eseguiamo lo scroll fisico
                 feedContainer.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
                 
-                // 3. Riaccendiamo la calamita dopo 800 millisecondi (il tempo che finisca l'animazione)
+                // Lo riattiva dopo l'animazione
                 setTimeout(() => {
                     feedContainer.style.scrollSnapType = 'y mandatory';
                 }, 800);
             }
         } else {
-            // Se clicco l'icona in alto ma non ho salvato niente, diamo un piccolo avviso
             alert("Nessun segnalibro salvato! Clicca l'icona del libro su un carosello per salvarlo.");
         }
     };
@@ -207,22 +201,21 @@ function setupNav() {
         };
     }
 
-    // TASTO SEGNALIBRO (NAVBAR)
     if (btnSegnalibro) {
         btnSegnalibro.onclick = function(e) {
             e.preventDefault();
             
-            // Se ero nei preferiti, ricarico tutti i contenuti prima di saltare
+            // Il segnalibro NON filtra più. Assicura che la home sia attiva.
             if (currentFilter !== 'all') {
                 currentFilter = 'all';
-                document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
-                btnTutto.classList.add('nav-icon-active'); // Accendiamo visivamente la Home
                 renderFeed(lastData);
-                setTimeout(scrollToBookmark, 300);
-            } else {
-                // Se sono già nella home, salto direttamente al segnalibro
-                scrollToBookmark();
             }
+            
+            // L'icona attiva nella navbar resta quella della Home (perché non stiamo filtrando)
+            document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('nav-icon-active'));
+            btnTutto.classList.add('nav-icon-active'); 
+            
+            setTimeout(scrollToBookmark, 200);
         };
     }
 
